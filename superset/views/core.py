@@ -297,14 +297,14 @@ class DatabaseView(SupersetModelView, DeleteMixin, YamlExportMixin):  # noqa
         DeleteMixin._delete(self, pk)
 
 
-appbuilder.add_link(
-    'Import Dashboards',
-    label=__('Import Dashboards'),
-    href='/superset/import_dashboards',
-    icon='fa-cloud-upload',
-    category='Manage',
-    category_label=__('Manage'),
-    category_icon='fa-wrench')
+# appbuilder.add_link(
+#     'Import Dashboards',
+#     label=__('Import Dashboards'),
+#     href='/superset/import_dashboards',
+#     icon='fa-cloud-upload',
+#     category='Manage',
+#     category_label=__('Manage'),
+#     category_icon='fa-wrench')
 
 
 appbuilder.add_view(
@@ -312,9 +312,13 @@ appbuilder.add_view(
     'Databases',
     label=__('Databases'),
     icon='fa-database',
-    category='Sources',
-    category_label=__('Sources'),
+    # category='Sources',
+    category='SQL Lab',
+    # category_label=__('Sources'),
+    category_label=__('SQL Lab'),
     category_icon='fa-database')
+
+appbuilder.add_separator('SQL Lab')
 
 
 class DatabaseAsync(DatabaseView):
@@ -379,7 +383,7 @@ class CsvToDatabaseView(SimpleFormView):
         return redirect('/tablemodelview/list/')
 
 
-appbuilder.add_view_no_menu(CsvToDatabaseView)
+# appbuilder.add_view_no_menu(CsvToDatabaseView)
 
 
 class DatabaseTablesAsync(DatabaseView):
@@ -406,13 +410,13 @@ if config.get('ENABLE_ACCESS_REQUEST'):
             'created_on': _('Created On'),
         }
 
-    appbuilder.add_view(
-        AccessRequestsModelView,
-        'Access requests',
-        label=__('Access requests'),
-        category='Security',
-        category_label=__('Security'),
-        icon='fa-table')
+    # appbuilder.add_view(
+    #     AccessRequestsModelView,
+    #     'Access requests',
+    #     label=__('Access requests'),
+    #     category='Security',
+    #     category_label=__('Security'),
+    #     icon='fa-table')
 
 
 class SliceModelView(SupersetModelView, DeleteMixin):  # noqa
@@ -494,13 +498,13 @@ class SliceModelView(SupersetModelView, DeleteMixin):  # noqa
         )
 
 
-appbuilder.add_view(
-    SliceModelView,
-    'Charts',
-    label=__('Charts'),
-    icon='fa-bar-chart',
-    category='',
-    category_icon='')
+# appbuilder.add_view(
+#     SliceModelView,
+#     'Charts',
+#     label=__('Charts'),
+#     icon='fa-bar-chart',
+#     category='',
+#     category_icon='')
 
 
 class SliceAsync(SliceModelView):  # noqa
@@ -513,7 +517,7 @@ class SliceAsync(SliceModelView):  # noqa
     }
 
 
-appbuilder.add_view_no_menu(SliceAsync)
+# appbuilder.add_view_no_menu(SliceAsync)
 
 
 class SliceAddView(SliceModelView):  # noqa
@@ -524,7 +528,7 @@ class SliceAddView(SliceModelView):  # noqa
         'owners', 'modified', 'changed_on']
 
 
-appbuilder.add_view_no_menu(SliceAddView)
+# appbuilder.add_view_no_menu(SliceAddView)
 
 
 class DashboardModelView(SupersetModelView, DeleteMixin):  # noqa
@@ -619,13 +623,13 @@ class DashboardModelView(SupersetModelView, DeleteMixin):  # noqa
         )
 
 
-appbuilder.add_view(
-    DashboardModelView,
-    'Dashboards',
-    label=__('Dashboards'),
-    icon='fa-dashboard',
-    category='',
-    category_icon='')
+# appbuilder.add_view(
+#     DashboardModelView,
+#     'Dashboards',
+#     label=__('Dashboards'),
+#     icon='fa-dashboard',
+#     category='',
+#     category_icon='')
 
 
 class DashboardModelViewAsync(DashboardModelView):  # noqa
@@ -641,7 +645,7 @@ class DashboardModelViewAsync(DashboardModelView):  # noqa
     }
 
 
-appbuilder.add_view_no_menu(DashboardModelViewAsync)
+# appbuilder.add_view_no_menu(DashboardModelViewAsync)
 
 
 class DashboardAddView(DashboardModelView):  # noqa
@@ -652,7 +656,7 @@ class DashboardAddView(DashboardModelView):  # noqa
     show_columns = list(set(DashboardModelView.edit_columns + list_columns))
 
 
-appbuilder.add_view_no_menu(DashboardAddView)
+# appbuilder.add_view_no_menu(DashboardAddView)
 
 
 class LogModelView(SupersetModelView):
@@ -668,13 +672,13 @@ class LogModelView(SupersetModelView):
     }
 
 
-appbuilder.add_view(
-    LogModelView,
-    'Action Log',
-    label=__('Action Log'),
-    category='Security',
-    category_label=__('Security'),
-    icon='fa-list-ol')
+# appbuilder.add_view(
+#     LogModelView,
+#     'Action Log',
+#     label=__('Action Log'),
+#     category='Security',
+#     category_label=__('Security'),
+#     icon='fa-list-ol')
 
 
 @app.route('/health')
@@ -721,7 +725,7 @@ class KV(BaseSupersetView):
         return Response(kv.value, status=200)
 
 
-appbuilder.add_view_no_menu(KV)
+# appbuilder.add_view_no_menu(KV)
 
 
 class R(BaseSupersetView):
@@ -1034,16 +1038,16 @@ class Superset(BaseSupersetView):
             )
             return viz_obj
 
-    @has_access
-    @expose('/slice/<slice_id>/')
-    def slice(self, slice_id):
-        form_data, slc = self.get_form_data(slice_id)
-        endpoint = '/superset/explore/?form_data={}'.format(
-            parse.quote(json.dumps(form_data)),
-        )
-        if request.args.get('standalone') == 'true':
-            endpoint += '&standalone=true'
-        return redirect(endpoint)
+    # @has_access
+    # @expose('/slice/<slice_id>/')
+    # def slice(self, slice_id):
+    #     form_data, slc = self.get_form_data(slice_id)
+    #     endpoint = '/superset/explore/?form_data={}'.format(
+    #         parse.quote(json.dumps(form_data)),
+    #     )
+    #     if request.args.get('standalone') == 'true':
+    #         endpoint += '&standalone=true'
+    #     return redirect(endpoint)
 
     def get_query_string_response(self, viz_obj):
         query = None
@@ -1186,25 +1190,25 @@ class Superset(BaseSupersetView):
                                   query=query,
                                   force=force)
 
-    @log_this
-    @has_access
-    @expose('/import_dashboards', methods=['GET', 'POST'])
-    def import_dashboards(self):
-        """Overrides the dashboards using json instances from the file."""
-        f = request.files.get('file')
-        if request.method == 'POST' and f:
-            current_tt = int(time.time())
-            data = json.loads(f.stream.read(), object_hook=utils.decode_dashboards)
-            # TODO: import DRUID datasources
-            for table in data['datasources']:
-                type(table).import_obj(table, import_time=current_tt)
-            db.session.commit()
-            for dashboard in data['dashboards']:
-                models.Dashboard.import_obj(
-                    dashboard, import_time=current_tt)
-            db.session.commit()
-            return redirect('/dashboardmodelview/list/')
-        return self.render_template('superset/import_dashboards.html')
+    # @log_this
+    # @has_access
+    # @expose('/import_dashboards', methods=['GET', 'POST'])
+    # def import_dashboards(self):
+    #     """Overrides the dashboards using json instances from the file."""
+    #     f = request.files.get('file')
+    #     if request.method == 'POST' and f:
+    #         current_tt = int(time.time())
+    #         data = json.loads(f.stream.read(), object_hook=utils.decode_dashboards)
+    #         # TODO: import DRUID datasources
+    #         for table in data['datasources']:
+    #             type(table).import_obj(table, import_time=current_tt)
+    #         db.session.commit()
+    #         for dashboard in data['dashboards']:
+    #             models.Dashboard.import_obj(
+    #                 dashboard, import_time=current_tt)
+    #         db.session.commit()
+    #         return redirect('/dashboardmodelview/list/')
+    #     return self.render_template('superset/import_dashboards.html')
 
     @log_this
     @has_access
@@ -1768,56 +1772,56 @@ class Superset(BaseSupersetView):
                 'Connection failed!\n\n'
                 'The error message returned was:\n{}').format(e))
 
-    @api
-    @has_access_api
-    @expose('/recent_activity/<user_id>/', methods=['GET'])
-    def recent_activity(self, user_id):
-        """Recent activity (actions) for a given user"""
-        M = models  # noqa
+    # @api
+    # @has_access_api
+    # @expose('/recent_activity/<user_id>/', methods=['GET'])
+    # def recent_activity(self, user_id):
+    #     """Recent activity (actions) for a given user"""
+    #     M = models  # noqa
 
-        if request.args.get('limit'):
-            limit = int(request.args.get('limit'))
-        else:
-            limit = 1000
+    #     if request.args.get('limit'):
+    #         limit = int(request.args.get('limit'))
+    #     else:
+    #         limit = 1000
 
-        qry = (
-            db.session.query(M.Log, M.Dashboard, M.Slice)
-            .outerjoin(
-                M.Dashboard,
-                M.Dashboard.id == M.Log.dashboard_id,
-            )
-            .outerjoin(
-                M.Slice,
-                M.Slice.id == M.Log.slice_id,
-            )
-            .filter(
-                sqla.and_(
-                    ~M.Log.action.in_(('queries', 'shortner', 'sql_json')),
-                    M.Log.user_id == user_id,
-                ),
-            )
-            .order_by(M.Log.dttm.desc())
-            .limit(limit)
-        )
-        payload = []
-        for log in qry.all():
-            item_url = None
-            item_title = None
-            if log.Dashboard:
-                item_url = log.Dashboard.url
-                item_title = log.Dashboard.dashboard_title
-            elif log.Slice:
-                item_url = log.Slice.slice_url
-                item_title = log.Slice.slice_name
+    #     qry = (
+    #         db.session.query(M.Log, M.Dashboard, M.Slice)
+    #         .outerjoin(
+    #             M.Dashboard,
+    #             M.Dashboard.id == M.Log.dashboard_id,
+    #         )
+    #         .outerjoin(
+    #             M.Slice,
+    #             M.Slice.id == M.Log.slice_id,
+    #         )
+    #         .filter(
+    #             sqla.and_(
+    #                 ~M.Log.action.in_(('queries', 'shortner', 'sql_json')),
+    #                 M.Log.user_id == user_id,
+    #             ),
+    #         )
+    #         .order_by(M.Log.dttm.desc())
+    #         .limit(limit)
+    #     )
+    #     payload = []
+    #     for log in qry.all():
+    #         item_url = None
+    #         item_title = None
+    #         if log.Dashboard:
+    #             item_url = log.Dashboard.url
+    #             item_title = log.Dashboard.dashboard_title
+    #         elif log.Slice:
+    #             item_url = log.Slice.slice_url
+    #             item_title = log.Slice.slice_name
 
-            payload.append({
-                'action': log.Log.action,
-                'item_url': item_url,
-                'item_title': item_title,
-                'time': log.Log.dttm,
-            })
-        return json_success(
-            json.dumps(payload, default=utils.json_int_dttm_ser))
+    #         payload.append({
+    #             'action': log.Log.action,
+    #             'item_url': item_url,
+    #             'item_title': item_title,
+    #             'time': log.Log.dttm,
+    #         })
+    #     return json_success(
+    #         json.dumps(payload, default=utils.json_int_dttm_ser))
 
     @api
     @has_access_api
@@ -2873,18 +2877,18 @@ class CssTemplateAsyncModelView(CssTemplateModelView):
     list_columns = ['template_name', 'css']
 
 
-appbuilder.add_separator('Sources')
-appbuilder.add_view(
-    CssTemplateModelView,
-    'CSS Templates',
-    label=__('CSS Templates'),
-    icon='fa-css3',
-    category='Manage',
-    category_label=__('Manage'),
-    category_icon='')
+# appbuilder.add_separator('Sources')
+# appbuilder.add_view(
+#     CssTemplateModelView,
+#     'CSS Templates',
+#     label=__('CSS Templates'),
+#     icon='fa-css3',
+#     category='Manage',
+#     category_label=__('Manage'),
+#     category_icon='')
 
 
-appbuilder.add_view_no_menu(CssTemplateAsyncModelView)
+# appbuilder.add_view_no_menu(CssTemplateAsyncModelView)
 
 appbuilder.add_link(
     'SQL Editor',
@@ -2906,15 +2910,15 @@ appbuilder.add_link(
     category_label=__('SQL Lab'),
 )
 
-appbuilder.add_link(
-    'Upload a CSV',
-    label=__('Upload a CSV'),
-    href='/csvtodatabaseview/form',
-    icon='fa-upload',
-    category='Sources',
-    category_label=__('Sources'),
-    category_icon='fa-wrench')
-appbuilder.add_separator('Sources')
+# appbuilder.add_link(
+#     'Upload a CSV',
+#     label=__('Upload a CSV'),
+#     href='/csvtodatabaseview/form',
+#     icon='fa-upload',
+#     category='Sources',
+#     category_label=__('Sources'),
+#     category_icon='fa-wrench')
+# appbuilder.add_separator('Sources')
 
 
 @app.after_request

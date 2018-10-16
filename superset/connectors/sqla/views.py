@@ -94,7 +94,7 @@ class TableColumnInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
     }
 
 
-appbuilder.add_view_no_menu(TableColumnInlineView)
+# appbuilder.add_view_no_menu(TableColumnInlineView)
 
 
 class SqlMetricInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
@@ -148,7 +148,7 @@ class SqlMetricInlineView(CompactCRUDMixin, SupersetModelView):  # noqa
             security_manager.merge_perm('metric_access', metric.get_perm())
 
 
-appbuilder.add_view_no_menu(SqlMetricInlineView)
+# appbuilder.add_view_no_menu(SqlMetricInlineView)
 
 
 class TableModelView(DatasourceModelView, DeleteMixin, YamlExportMixin):  # noqa
@@ -305,14 +305,14 @@ class TableModelView(DatasourceModelView, DeleteMixin, YamlExportMixin):  # noqa
         return redirect('/tablemodelview/list/')
 
 
-appbuilder.add_view_no_menu(TableModelView)
-appbuilder.add_link(
-    'Tables',
-    label=__('Tables'),
-    href='/tablemodelview/list/?_flt_1_is_sqllab_view=y',
-    icon='fa-upload',
-    category='Sources',
-    category_label=__('Sources'),
-    category_icon='fa-table')
+# appbuilder.add_view_no_menu(TableModelView)
+# appbuilder.add_link(
+#     'Tables',
+#     label=__('Tables'),
+#     href='/tablemodelview/list/?_flt_1_is_sqllab_view=y',
+#     icon='fa-upload',
+#     category='Sources',
+#     category_label=__('Sources'),
+#     category_icon='fa-table')
 
-appbuilder.add_separator('Sources')
+# appbuilder.add_separator('Sources')

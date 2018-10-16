@@ -28,13 +28,13 @@ class QueryView(SupersetModelView):
     }
 
 
-appbuilder.add_view(
-    QueryView,
-    'Queries',
-    label=__('Queries'),
-    category='Manage',
-    category_label=__('Manage'),
-    icon='fa-search')
+# appbuilder.add_view(
+#     QueryView,
+#     'Queries',
+#     label=__('Queries'),
+#     category='Manage',
+#     category_label=__('Manage'),
+#     icon='fa-search')
 
 
 class SavedQueryView(SupersetModelView, DeleteMixin):
