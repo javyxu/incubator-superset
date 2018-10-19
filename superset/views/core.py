@@ -2807,7 +2807,7 @@ class Superset(BaseSupersetView):
         return self.render_template(
             'superset/basic.html',
             entry='welcome',
-            title='Superset',
+            title='DB Clients',
             bootstrap_data=json.dumps(payload, default=utils.json_iso_dttm_ser),
         )
 
