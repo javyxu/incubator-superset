@@ -9,14 +9,14 @@ export default class ShareQueryBtn extends CopyQueryTabUrl {
   render() {
     return (
       <CopyToClipboard
-        copyNode={(
-          <Button bsSize="small" className="toggleSave">
-            <i className="fa fa-clipboard" /> {t('Share Query')}
-          </Button>
-      )}
-        tooltipText={t('copy URL to clipboard')}
-        shouldShowText={false}
-        getText={this.getUrl.bind(this)}
+      //   copyNode={(
+      //     <Button bsSize="small" className="toggleSave">
+      //       <i className="fa fa-clipboard" /> {t('Share Query')}
+      //     </Button>
+      // )}
+        // tooltipText={t('copy URL to clipboard')}
+        // shouldShowText={false}
+        // getText={this.getUrl.bind(this)}
       />);
   }
 }

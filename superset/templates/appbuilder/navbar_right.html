@@ -3,7 +3,7 @@
 {% if not locale %}
     {% set locale = 'en' %}
 {% endif %}
-{% if languages.keys()|length > 1 %}
+<!-- {% if languages.keys()|length > 1 %}
 <li class="dropdown">
     <a class="dropdown-toggle" data-toggle="dropdown" href="javascript:void(0)">
        <div class="f16"><i class="flag {{languages[locale].get('flag')}}"></i>&nbsp;<b class="caret"></b>
@@ -23,7 +23,7 @@
       </li>
     </ul>
 </li>
-{% endif %}
+{% endif %} -->
 
 
 
@@ -38,7 +38,7 @@
         <i class="fa fa-user"></i>&nbsp;<b class="caret"></b>
       </a>
         <ul class="dropdown-menu">
-            <li><a href="{{appbuilder.get_url_for_userinfo}}"><span class="fa fa-fw fa-user"></span>{{_("Profile")}}</a></li>
+            <!-- <li><a href="{{appbuilder.get_url_for_userinfo}}"><span class="fa fa-fw fa-user"></span>{{_("Profile")}}</a></li> -->
             <li><a href="{{appbuilder.get_url_for_logout}}"><span class="fa fa-fw fa-sign-out"></span>{{_("Logout")}}</a></li>
         </ul>
     </li>

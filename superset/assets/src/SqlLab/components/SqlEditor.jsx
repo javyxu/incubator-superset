@@ -228,7 +228,7 @@ class SqlEditor extends React.PureComponent {
                 dbId={qe.dbId}
               />
             </span>
-            <span className="m-r-5">
+            {/* <span className="m-r-5">
               <ShareQuery queryEditor={qe} />
             </span>
             {ctasControls}
@@ -237,17 +237,17 @@ class SqlEditor extends React.PureComponent {
                 header="Hotkeys"
                 hotkeys={hotkeys}
               />
-            </span>
+            </span> */}
           </Form>
         </div>
         <div className="pull-right">
-          <TemplateParamsEditor
+          {/* <TemplateParamsEditor
             language="json"
             onChange={(params) => {
               this.props.actions.queryEditorSetTemplateParams(qe, params);
             }}
             code={qe.templateParams}
-          />
+          /> */}
           {limitWarning}
           {this.props.latestQuery &&
             <Timer

@@ -128,7 +128,7 @@ class TabbedSqlEditors extends React.PureComponent {
         this.props.defaultDbId,
       schema: (activeQueryEditor) ? activeQueryEditor.schema : null,
       autorun: false,
-      sql: 'SELECT ...',
+      sql: 'SELECT * \nFROM\nWHERE',
     };
     this.props.actions.addQueryEditor(qe);
   }
@@ -173,14 +173,14 @@ class TabbedSqlEditors extends React.PureComponent {
             <MenuItem eventKey="2" onClick={this.renameTab.bind(this, qe)}>
               <i className="fa fa-i-cursor" /> {t('rename tab')}
             </MenuItem>
-            {qe &&
+            {/* {qe &&
               <CopyQueryTabUrl queryEditor={qe} />
             }
             <MenuItem eventKey="4" onClick={this.toggleLeftBar.bind(this)}>
               <i className="fa fa-cogs" />
               &nbsp;
               {this.state.hideLeftBar ? t('expand tool bar') : t('hide tool bar')}
-            </MenuItem>
+            </MenuItem> */}
           </DropdownButton>
         </div>
       );
