@@ -45,7 +45,7 @@ custom_password_store = config.get('SQLALCHEMY_CUSTOM_PASSWORD_STORE')
 stats_logger = config.get('STATS_LOGGER')
 metadata = Model.metadata  # pylint: disable=no-member
 
-PASSWORD_MASK = 'X' * 10
+PASSWORD_MASK = '*' * 10
 
 def set_related_perm(mapper, connection, target):  # noqa
     src_class = target.cls_model
