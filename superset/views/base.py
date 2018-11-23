@@ -22,7 +22,6 @@ from flask_babel import lazy_gettext as _
 import yaml
 
 from superset import conf, security_manager, utils
-from superset.translations.utils import get_language_pack
 
 FRONTEND_CONF_KEYS = (
     'SUPERSET_WEBSERVER_TIMEOUT',
@@ -97,7 +96,6 @@ class BaseSupersetView(BaseView):
             'flash_messages': messages,
             'conf': {k: conf.get(k) for k in FRONTEND_CONF_KEYS},
             'locale': locale,
-            'language_pack': get_language_pack(locale),
         }
 
 
