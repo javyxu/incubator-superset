@@ -1,3 +1,4 @@
+aniso8601==4.0.1
 bleach==2.1.2
 boto3==1.4.7
 botocore==1.7.48
@@ -9,6 +10,7 @@ flask-appbuilder==1.10.0
 flask-caching==1.4.0
 flask-compress==1.4.0
 flask-migrate==2.1.1
+Flask-RESTful==0.3.6
 flask-script==2.0.6
 flask-testing==0.7.1
 flask-wtf==0.14.2
