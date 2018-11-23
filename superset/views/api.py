@@ -42,12 +42,7 @@ class Schemas(Resource):
     def get(self, database_name):
         try:
             session = db.session
-            databases = session.query(models.Database).all()
-            curdatabase = None
-            for database in databases:
-                if database_name ==  database.name:
-                    curdatabase = database
-                    break
+            curdatabase = session.query(models.Database).filter_by(database_name=database_name).first()
             schemas = curdatabase.all_schema_names()
         except Exception as e:
             return json_error_response(e)
@@ -60,12 +55,7 @@ class Tables(Resource):
     def get(self, database_name, schema_name=None):
         try:
             session = db.session
-            databases = session.query(models.Database).all()
-            curdatabase = None
-            for database in databases:
-                if database_name ==  database.name:
-                    curdatabase = database
-                    break
+            curdatabase = session.query(models.Database).filter_by(database_name=database_name).first()
             alltables = curdatabase.all_table_names(schema=schema_name)
         except Exception as e:
             return json_error_response(e) 
@@ -78,12 +68,7 @@ class ColNames(Resource):
     def get(self, database_name, table_name, schema_name=None):
         try:
             session = db.session
-            databases = session.query(models.Database).all()
-            curdatabase = None
-            for database in databases:
-                if database_name ==  database.name:
-                    curdatabase = database
-                    break
+            curdatabase = session.query(models.Database).filter_by(database_name=database_name).first()
             colnames = curdatabase.get_columns(table_name, schema_name)
             tmp = []
             for colname in colnames:
@@ -103,12 +88,7 @@ class GetAllData(Resource):
     def get(self, database_name, table_name, schema_name=None):
         try:
             session = db.session
-            databases = session.query(models.Database).all()
-            curdatabase = None
-            for database in databases:
-                if database_name ==  database.name:
-                    curdatabase = database
-                    break
+            curdatabase = session.query(models.Database).filter_by(database_name=database_name).first()
             # if schema_name is not None:
             #     table_name = schema_name + "." + table_name
             datas = curdatabase.get_df('SELECT * FROM {0}'.format(table_name), schema_name)
@@ -123,12 +103,7 @@ class ExecuteSql(Resource):
     def get(self, database_name, sql, schema_name=None):
         try:
             session = db.session
-            databases = session.query(models.Database).all()
-            curdatabase = None
-            for database in databases:
-                if database_name ==  database.name:
-                    curdatabase = database
-                    break
+            curdatabase = session.query(models.Database).filter_by(database_name=database_name).first()
             datas = curdatabase.get_df(sql, schema_name)
         except Exception as e:
             json_error_response(e)
@@ -141,12 +116,7 @@ class GetDatamodel(Resource):
     def get(self):
         try:
             session = db.session
-            databases = session.query(models.Database).all()
-            curdatabase = None
-            for database in databases:
-                if database.name ==  "main":
-                    curdatabase = database
-                    break
+            curdatabase = session.query(models.Database).filter_by(database_name='main').first()
             datas = curdatabase.get_df('SELECT * FROM dbs', 'main')
         except Exception as e:
             return json_error_response(e)
@@ -231,7 +201,6 @@ class UpdateDatamodel(Resource):
         except Exception as e:
             return json_error_response(e)
         return json_success(msg=json.dumps("ok"))
-
 
 
 class DeleteDatamodel(Resource):
