@@ -5,13 +5,19 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import logging
+
 from flask import Flask, jsonify, Response
 from flask_restful import reqparse, Resource, Api, request
 
 import superset.models.core as models
 import superset.models.helpers as helper
+import superset.models.sql_lab as sqllab
 from superset import app, db, utils
 from .base import json_error_response
+from sqlalchemy import create_engine
+from sqlalchemy.engine.url import make_url
+from flask_appbuilder.models.sqla.interface import SQLAInterface
 
 import simplejson as json
 
@@ -29,8 +35,10 @@ class Databases(Resource):
             databases = session.query(models.Database).all()
             temp = []
             for database in databases:
-                temp.append(database.name)
+                if database.name != 'main':
+                    temp.append(database.name)
         except Exception as e:
+            logging.exception(e)
             return json_error_response(e)
         # return jsonify({"status":"OK","code":"200","message":"","result": { "databases": json.dumps(temp)}})
         return json_success(msg={"databases": json.dumps(temp)})
@@ -45,6 +53,7 @@ class Schemas(Resource):
             curdatabase = session.query(models.Database).filter_by(database_name=database_name).first()
             schemas = curdatabase.all_schema_names()
         except Exception as e:
+            logging.exception(e)
             return json_error_response(e)
         return json_success(msg={"schemas": json.dumps(schemas)})
 
@@ -58,6 +67,7 @@ class Tables(Resource):
             curdatabase = session.query(models.Database).filter_by(database_name=database_name).first()
             alltables = curdatabase.all_table_names(schema=schema_name)
         except Exception as e:
+            logging.exception(e)
             return json_error_response(e) 
         return json_success(msg={"tables": json.dumps(alltables)})
 
@@ -77,6 +87,7 @@ class ColNames(Resource):
                     d[kv] = str(colname[kv])
                 tmp.append(d)
         except Exception as e:
+            logging.exception(e)
             return json_error_response(e)
         return json_success(msg={"columns": json.dumps(tmp)})
 
@@ -93,6 +104,7 @@ class GetAllData(Resource):
             #     table_name = schema_name + "." + table_name
             datas = curdatabase.get_df('SELECT * FROM {0}'.format(table_name), schema_name)
         except Exception as e:
+            logging.exception(e)
             return json_error_response(e)
         return json_success(msg={"datas": datas.to_json(orient='records')})
 
@@ -106,10 +118,40 @@ class ExecuteSql(Resource):
             curdatabase = session.query(models.Database).filter_by(database_name=database_name).first()
             datas = curdatabase.get_df(sql, schema_name)
         except Exception as e:
+            logging.exception(e)
             json_error_response(e)
         return json_success(msg=datas.to_json(orient='records'))
 
 api.add_resource(ExecuteSql, '/api/v1/sql/executesql/<database_name>/<sql>')
+
+
+parser = reqparse.RequestParser()
+parser.add_argument('data', type=str)
+class SavedSql(Resource):
+    def get(self):
+        try:
+            args = parser.parse_args()
+            data = args['data']
+            # task = {
+            #     'db_id': 1,
+            #     'schema': 'main',
+            #     'label': 'test2',
+            #     'description' : 'test1',
+            #     'sql' : 'select * from dbs',
+            # }
+            # dict_rep = task
+            dict_rep = dict_rep = helper.json_to_dict(data)
+            datamodel = sqllab.SavedQuery()
+            for kv in dict_rep:
+                 setattr(datamodel, kv, dict_rep[kv])
+            db.session.add(datamodel)
+            db.session.commit()
+        except Exception as e:
+            logging.exception(e)
+            json_error_response(e)
+        return json_success(msg=json.dumps("ok"))
+        
+api.add_resource(SavedSql, '/api/v1/sql/savedsql')
 
 
 class GetDatamodel(Resource):
@@ -117,10 +159,71 @@ class GetDatamodel(Resource):
         try:
             session = db.session
             curdatabase = session.query(models.Database).filter_by(database_name='main').first()
-            datas = curdatabase.get_df('SELECT * FROM dbs', 'main')
+            datas = curdatabase.get_df('SELECT * FROM dbs WHERE database_name != "main"', 'main')
         except Exception as e:
+            logging.exception(e)
             return json_error_response(e)
         return json_success(msg={"datamodels": datas.to_json(orient='records')})
+api.add_resource(GetDatamodel, '/api/v1/datamodels')
+
+# test conn
+class TestConnection(Resource):
+   def get(self, url):
+        """Tests a sqla connection"""
+        try:
+            # username = g.user.username if g.user is not None else None
+            username = ''
+            uri = request.json.get('uri')
+            db_name = request.json.get('name')
+            impersonate_user = request.json.get('impersonate_user')
+            database = None
+            if db_name:
+                database = (
+                    db.session
+                    .query(models.Database)
+                    .filter_by(database_name=db_name)
+                    .first()
+                )
+                if database and uri == database.safe_sqlalchemy_uri():
+                    # the password-masked uri was passed
+                    # use the URI associated with this database
+                    uri = database.sqlalchemy_uri_decrypted
+
+            configuration = {}
+
+            if database and uri:
+                url = make_url(uri)
+                db_engine = models.Database.get_db_engine_spec_for_backend(
+                    url.get_backend_name())
+                db_engine.patch()
+
+                masked_url = database.get_password_masked_url_from_uri(uri)
+                logging.info('Superset.testconn(). Masked URL: {0}'.format(masked_url))
+
+                configuration.update(
+                    db_engine.get_configuration_for_impersonation(uri,
+                                                                  impersonate_user,
+                                                                  username),
+                )
+
+            engine_params = (
+                request.json
+                .get('extras', {})
+                .get('engine_params', {}))
+            connect_args = engine_params.get('connect_args')
+
+            if configuration:
+                connect_args['configuration'] = configuration
+
+            engine = create_engine(uri, **engine_params)
+            engine.connect()
+            return json_success(json.dumps(engine.table_names(), indent=4))
+        except Exception as e:
+            logging.exception(e)
+            return json_error_response((
+                'Connection failed!\n\n'
+                'The error message returned was:\n{}').format(e))
+api.add_resource(TestConnection, '/api/v1/testconn')
 
 parser = reqparse.RequestParser()
 parser.add_argument('data')
@@ -156,8 +259,11 @@ class AddDatamodel(Resource):
             models.Database.import_from_dict(session=session, dict_rep=dict_rep)
             session.commit()
         except Exception as e:
+            logging.exception(e)
             return json_error_response(e)
         return json_success(msg=json.dumps("ok"))
+# http://172.16.151.188:8088/api/v1/datamodel/add?data={%22database_name%22:%22test6%22,%22sqlalchemy_uri%22:%22postgresql://rasdaman:XXXXXXXXXX@10.0.4.90:5432/RASBASE%22,%22created_by_fk%22:1,%22changed_by_fk%22:1,%22password%22:%2212345678%22,%22cache_timeout%22:40,%22extra%22:%22%22,%22select_as_create_table_as%22:true,%22allow_ctas%22:true,%22expose_in_sqllab%22:true,%22force_ctas_schema%22:%22%22,%22allow_run_async%22:true,%22allow_run_sync%22:true,%22allow_dml%22:true,%22perm%22:%22%22,%22verbose_name%22:%22%22,%22impersonate_user%22:false,%22allow_multi_schema_metadata_fetch%22:false}
+api.add_resource(AddDatamodel, '/api/v1/datamodels/add')
 
 parser = reqparse.RequestParser()
 parser.add_argument('id', type=int)
@@ -192,16 +298,17 @@ class UpdateDatamodel(Resource):
             # dict_rep = task
             dict_rep = helper.json_to_dict(data)
             session = db.session
-            # o = session.query(models.Database).filter_by(id=pk).first()
-            # session.delete(o)
-            # session.commit()
-            models.Database
-            models.Database.import_from_dict(session=session, dict_rep=dict_rep, parent=pk)
+            curdatabase = session.query(models.Database).filter_by(id=pk).first()
+            for kv in dict_rep:
+                 setattr(curdatabase, kv, dict_rep[kv])
+            db.session.add(curdatabase)
+            db.session.commit()
             session.commit()
         except Exception as e:
+            logging.exception(e)
             return json_error_response(e)
         return json_success(msg=json.dumps("ok"))
-
+api.add_resource(UpdateDatamodel, '/api/v1/datamodels/edit')
 
 class DeleteDatamodel(Resource):
     def get(self, id):
@@ -213,11 +320,7 @@ class DeleteDatamodel(Resource):
             session.delete(o)
             session.commit()
         except Exception as e:
+            logging.exception(e)
             return json_error_response(e)
         return json_success(msg=json.dumps({"result": "ok"}))
-
-api.add_resource(GetDatamodel, '/api/v1/datamodels')
-# http://172.16.151.188:8088/api/v1/datamodel/add?data={%22database_name%22:%22test6%22,%22sqlalchemy_uri%22:%22postgresql://rasdaman:XXXXXXXXXX@10.0.4.90:5432/RASBASE%22,%22created_by_fk%22:1,%22changed_by_fk%22:1,%22password%22:%2212345678%22,%22cache_timeout%22:40,%22extra%22:%22%22,%22select_as_create_table_as%22:true,%22allow_ctas%22:true,%22expose_in_sqllab%22:true,%22force_ctas_schema%22:%22%22,%22allow_run_async%22:true,%22allow_run_sync%22:true,%22allow_dml%22:true,%22perm%22:%22%22,%22verbose_name%22:%22%22,%22impersonate_user%22:false,%22allow_multi_schema_metadata_fetch%22:false}
-api.add_resource(AddDatamodel, '/api/v1/datamodels/add')
-api.add_resource(UpdateDatamodel, '/api/v1/datamodels/edit')
 api.add_resource(DeleteDatamodel, '/api/v1/datamodels/delete/<id>')

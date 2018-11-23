@@ -60,7 +60,7 @@ SECRET_KEY = '\2\1thisismyscretkey\1\2\e\y\y\h'  # noqa
 # The SQLAlchemy connection string.
 SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(DATA_DIR, 'superset.db')
 # SQLALCHEMY_DATABASE_URI = 'mysql://myapp@localhost/myapp'
-# SQLALCHEMY_DATABASE_URI = 'postgresql://root:password@localhost/myapp'
+# SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:postgres@localhost/postgres'
 
 # In order to hook up a custom password store for all SQLACHEMY connections
 # implement a function that takes a single argument of type 'sqla.engine.url',
@@ -89,15 +89,6 @@ SHOW_STACKTRACE = True
 
 # Extract and use X-Forwarded-For/X-Forwarded-Proto headers?
 ENABLE_PROXY_FIX = False
-
-# ------------------------------
-# GLOBALS FOR APP Builder
-# ------------------------------
-# Uncomment to setup Your App name
-APP_NAME = 'DB Clients'
-
-# Uncomment to setup an App icon
-APP_ICON = '/static/assets/images/superset-logo@2x.png'
 
 # Druid query timezone
 # tz.tzutc() : Using utc timezone
@@ -149,38 +140,6 @@ AUTH_TYPE = AUTH_DB
 # This is useful if one wants to enable anonymous users to view
 # dashboards. Explicit grant on specific datasets is still required.
 PUBLIC_ROLE_LIKE_GAMMA = False
-
-# ---------------------------------------------------
-# Babel config for translations
-# ---------------------------------------------------
-# Setup default language
-BABEL_DEFAULT_LOCALE = 'zh'
-# Your application default translation path
-BABEL_DEFAULT_FOLDER = 'superset/translations'
-# The allowed translation for you app
-LANGUAGES = {
-    'en': {'flag': 'us', 'name': 'English'},
-    # 'it': {'flag': 'it', 'name': 'Italian'},
-    # 'fr': {'flag': 'fr', 'name': 'French'},
-    'zh': {'flag': 'cn', 'name': 'Chinese'},
-    # 'ja': {'flag': 'jp', 'name': 'Japanese'},
-    # 'de': {'flag': 'de', 'name': 'German'},
-    # 'pt_BR': {'flag': 'br', 'name': 'Brazilian Portuguese'},
-    # 'ru': {'flag': 'ru', 'name': 'Russian'},
-}
-# ---------------------------------------------------
-# Image and file configuration
-# ---------------------------------------------------
-# The file upload folder, when using models with files
-UPLOAD_FOLDER = BASE_DIR + '/app/static/uploads/'
-
-# The image upload folder, when using models with images
-IMG_UPLOAD_FOLDER = BASE_DIR + '/app/static/uploads/'
-
-# The image upload url, when using models with images
-IMG_UPLOAD_URL = '/static/uploads/'
-# Setup image size default is (300, 200, True)
-# IMG_SIZE = (300, 200, True)
 
 CACHE_DEFAULT_TIMEOUT = 60 * 60 * 24
 CACHE_CONFIG = {'CACHE_TYPE': 'null'}
