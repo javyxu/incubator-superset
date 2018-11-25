@@ -199,14 +199,22 @@ api.add_resource(GetDatamodel, '/api/v1/datamodels')
 
 # test conn
 class TestConnection(Resource):
-   def get(self, url):
+    parser.add_argument('uri')
+    parser.add_argument('name')
+    parser.add_argument('impersonate_use')
+    parser.add_argument('extra')
+    def get(self):
         """Tests a sqla connection"""
         try:
+            args = parser.parse_args()
             # username = g.user.username if g.user is not None else None
             username = ''
-            uri = request.json.get('uri')
-            db_name = request.json.get('name')
-            impersonate_user = request.json.get('impersonate_user')
+            # uri = request.json.get('uri')
+            uri = args['uri']
+            # db_name = request.json.get('name')
+            db_name = args['name']
+            # impersonate_user = request.json.get('impersonate_user')
+            impersonate_use = args['impersonate_use']
             database = None
             if db_name:
                 database = (
@@ -237,10 +245,13 @@ class TestConnection(Resource):
                                                                   username),
                 )
 
+            # engine_params = (
+            #     request.json
+            #     .get('extras', {})
+            #     .get('engine_params', {}))
             engine_params = (
-                request.json
-                .get('extras', {})
-                .get('engine_params', {}))
+                args['extras'].get('engine_params')
+            )
             connect_args = engine_params.get('connect_args')
 
             if configuration:
