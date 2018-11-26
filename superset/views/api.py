@@ -18,16 +18,19 @@ from .base import json_error_response
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import make_url
 from flask_appbuilder.models.sqla.interface import SQLAInterface
+from flask_cors import CORS
 
 import simplejson as json
 
+CORS(app, supports_credentials=True)
+CORS(app, resources=r'/api')
 api = Api(app)
 
 parser = reqparse.RequestParser()
 
-def json_success(msg, status=200):
+def json_result(code=0, data=None, msg='success'):
     # res = Response(json_msg, status=status, mimetype='application/json')
-    return jsonify({"code":status, "result": msg})
+    return jsonify({"code":status, "data": data, "msg":msg})
 
 # 获取Databases
 class Databases(Resource):
@@ -41,9 +44,10 @@ class Databases(Resource):
                     temp.append(database.name)
         except Exception as e:
             logging.exception(e)
-            return json_error_response(e)
+            # return json_error_response(e)
+            return json_result(code=500, msg=str(e))
         # return jsonify({"status":"OK","code":"200","message":"","result": { "databases": json.dumps(temp)}})
-        return json_success(msg={"databases": json.dumps(temp)})
+        return json_result(data={"databases": json.dumps(temp)})
 
 api.add_resource(Databases, '/api/v1/databases')
 
@@ -60,8 +64,9 @@ class Schemas(Resource):
             schemas = curdatabase.all_schema_names()
         except Exception as e:
             logging.exception(e)
-            return json_error_response(e)
-        return json_success(msg={"schemas": json.dumps(schemas)})
+            # return json_error_response(e)
+            return json_result(code=500, msg=str(e))
+        return json_result(data={"schemas": json.dumps(schemas)})
 
 api.add_resource(Schemas, '/api/v1/getschemas')
 
@@ -79,8 +84,9 @@ class Tables(Resource):
             alltables = curdatabase.all_table_names(schema=schema_name)
         except Exception as e:
             logging.exception(e)
-            return json_error_response(e) 
-        return json_success(msg={"tables": json.dumps(alltables)})
+            # return json_error_response(e)
+            json_result(code=500, msg=str(e)) 
+        return json_result(data={"tables": json.dumps(alltables)})
 
 api.add_resource(Tables, '/api/v1/gettables')
 
@@ -106,8 +112,9 @@ class ColNames(Resource):
                 tmp.append(d)
         except Exception as e:
             logging.exception(e)
-            return json_error_response(e)
-        return json_success(msg={"columns": json.dumps(tmp)})
+            # return json_error_response(e)
+            return json_result(code=500, msg=str(e))
+        return json_result(data={"columns": json.dumps(tmp)})
 
 api.add_resource(ColNames, '/api/v1/getcolnames')
 
@@ -128,8 +135,9 @@ class GetAllData(Resource):
             datas = curdatabase.get_df('SELECT * FROM {0}'.format(table_name), schema_name)
         except Exception as e:
             logging.exception(e)
-            return json_error_response(e)
-        return json_success(msg={"datas": datas.to_json(orient='records')})
+            # return json_error_response(e)
+            return json_result(code=500, msg=str(e))
+        return json_result(data={"datas": datas.to_json(orient='records')})
 
 api.add_resource(GetAllData, '/api/v1/sql/getalldata')
 
@@ -149,8 +157,9 @@ class ExecuteSql(Resource):
             datas = curdatabase.get_df(sql, schema_name)
         except Exception as e:
             logging.exception(e)
-            json_error_response(e)
-        return json_success(msg=datas.to_json(orient='records'))
+            # json_error_response(e)
+            return json_result(code=500, msg=str(e))
+        return json_result(data=datas.to_json(orient='records'))
 
 api.add_resource(ExecuteSql, '/api/v1/sql/executesql')
 
@@ -178,8 +187,9 @@ class SavedSql(Resource):
             db.session.commit()
         except Exception as e:
             logging.exception(e)
-            json_error_response(e)
-        return json_success(msg=json.dumps("ok"))
+            # json_error_response(e)
+            return json_result(code=500, msg=str(e))
+        return json_result()
         
 api.add_resource(SavedSql, '/api/v1/sql/savedsql')
 
@@ -192,8 +202,9 @@ class GetDatamodel(Resource):
             datas = curdatabase.get_df('SELECT * FROM dbs WHERE database_name != "main"', 'main')
         except Exception as e:
             logging.exception(e)
-            return json_error_response(e)
-        return json_success(msg={"datamodels": datas.to_json(orient='records')})
+            # return json_error_response(e)
+            return json_result(code=500, msg=str(e))
+        return json_result(data={"datamodels": datas.to_json(orient='records')})
 api.add_resource(GetDatamodel, '/api/v1/datamodels')
 
 
@@ -201,7 +212,7 @@ api.add_resource(GetDatamodel, '/api/v1/datamodels')
 class TestConnection(Resource):
     parser.add_argument('uri')
     parser.add_argument('name')
-    parser.add_argument('impersonate_use')
+    # parser.add_argument('impersonate_use')
     parser.add_argument('extra')
     def get(self):
         """Tests a sqla connection"""
@@ -214,7 +225,7 @@ class TestConnection(Resource):
             # db_name = request.json.get('name')
             db_name = args['name']
             # impersonate_user = request.json.get('impersonate_user')
-            impersonate_use = args['impersonate_use']
+            # impersonate_use = args['impersonate_use']
             database = None
             if db_name:
                 database = (
@@ -239,11 +250,11 @@ class TestConnection(Resource):
                 masked_url = database.get_password_masked_url_from_uri(uri)
                 logging.info('Superset.testconn(). Masked URL: {0}'.format(masked_url))
 
-                configuration.update(
-                    db_engine.get_configuration_for_impersonation(uri,
-                                                                  impersonate_user,
-                                                                  username),
-                )
+                # configuration.update(
+                #     db_engine.get_configuration_for_impersonation(uri,
+                #                                                   impersonate_user,
+                #                                                   username),
+                # )
 
             # engine_params = (
             #     request.json
@@ -252,19 +263,21 @@ class TestConnection(Resource):
             engine_params = (
                 args['extras'].get('engine_params')
             )
-            connect_args = engine_params.get('connect_args')
+            # connect_args = engine_params.get('connect_args')
 
-            if configuration:
-                connect_args['configuration'] = configuration
+            # if configuration:
+            #     connect_args['configuration'] = configuration
 
             engine = create_engine(uri, **engine_params)
             engine.connect()
-            return json_success(json.dumps(engine.table_names(), indent=4))
+            # return json_success(json.dumps(engine.table_names(), indent=4))
         except Exception as e:
             logging.exception(e)
-            return json_error_response((
-                'Connection failed!\n\n'
-                'The error message returned was:\n{}').format(e))
+            # return json_error_response((
+            #     'Connection failed!\n\n'
+            #     'The error message returned was:\n{}').format(e))
+            return json_result(code=500, msg=str(e))
+        return json_result(data=json.dumps(engine.table_names()))
 api.add_resource(TestConnection, '/api/v1/testconn')
 
 
@@ -302,8 +315,9 @@ class AddDatamodel(Resource):
             session.commit()
         except Exception as e:
             logging.exception(e)
-            return json_error_response(e)
-        return json_success(msg=json.dumps("ok"))
+            # return json_error_response(e)
+            return json_result(code=500, msg=str(e))
+        return json_result()
 # http://172.16.151.188:8088/api/v1/datamodel/add?data={%22database_name%22:%22test6%22,%22sqlalchemy_uri%22:%22postgresql://rasdaman:XXXXXXXXXX@10.0.4.90:5432/RASBASE%22,%22created_by_fk%22:1,%22changed_by_fk%22:1,%22password%22:%2212345678%22,%22cache_timeout%22:40,%22extra%22:%22%22,%22select_as_create_table_as%22:true,%22allow_ctas%22:true,%22expose_in_sqllab%22:true,%22force_ctas_schema%22:%22%22,%22allow_run_async%22:true,%22allow_run_sync%22:true,%22allow_dml%22:true,%22perm%22:%22%22,%22verbose_name%22:%22%22,%22impersonate_user%22:false,%22allow_multi_schema_metadata_fetch%22:false}
 api.add_resource(AddDatamodel, '/api/v1/datamodels/add')
 
@@ -348,8 +362,9 @@ class UpdateDatamodel(Resource):
             session.commit()
         except Exception as e:
             logging.exception(e)
-            return json_error_response(e)
-        return json_success(msg=json.dumps("ok"))
+            # return json_error_response(e)
+            return json_result(code=500, msg=str(e))
+        return json_result()
 api.add_resource(UpdateDatamodel, '/api/v1/datamodels/edit')
 
 class DeleteDatamodel(Resource):
@@ -363,6 +378,7 @@ class DeleteDatamodel(Resource):
             session.commit()
         except Exception as e:
             logging.exception(e)
-            return json_error_response(e)
-        return json_success(msg=json.dumps({"result": "ok"}))
+            # return json_error_response(e)
+            return json_result(code=500, msg=str(e))
+        return json_success()
 api.add_resource(DeleteDatamodel, '/api/v1/datamodels/delete/<id>')
