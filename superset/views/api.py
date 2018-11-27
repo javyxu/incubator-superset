@@ -210,22 +210,25 @@ api.add_resource(GetDatamodel, '/api/v1/datamodels')
 
 # test conn
 class TestConnection(Resource):
-    parser.add_argument('uri')
-    parser.add_argument('name')
+    # parser.add_argument('uri')
+    # parser.add_argument('name')
     # parser.add_argument('impersonate_use')
-    parser.add_argument('extra')
-    def get(self):
+    # parser.add_argument('extra')
+    def post(self):
         """Tests a sqla connection"""
         try:
-            args = parser.parse_args()
+            data1 = request.form
+            data2 = json.dumps(data1)
+            data = json.loads(data2)
             # username = g.user.username if g.user is not None else None
             username = ''
-            # uri = request.json.get('uri')
-            uri = args['uri']
-            # db_name = request.json.get('name')
-            db_name = args['name']
-            # impersonate_user = request.json.get('impersonate_user')
-            # impersonate_use = args['impersonate_use']
+            # # data = json.loads(request.form)
+            uri = data.get('uri')
+            # # uri = args['uri']
+            db_name = data.get('name')
+            # # db_name = args['name']
+            impersonate_user = data.get('impersonate_user')
+            # # impersonate_use = args['impersonate_use']
             database = None
             if db_name:
                 database = (
@@ -250,23 +253,21 @@ class TestConnection(Resource):
                 masked_url = database.get_password_masked_url_from_uri(uri)
                 logging.info('Superset.testconn(). Masked URL: {0}'.format(masked_url))
 
-                # configuration.update(
-                #     db_engine.get_configuration_for_impersonation(uri,
-                #                                                   impersonate_user,
-                #                                                   username),
-                # )
+                configuration.update(
+                    db_engine.get_configuration_for_impersonation(uri,
+                                                                  impersonate_user,
+                                                                  username),
+                )
 
-            # engine_params = (
-            #     request.json
-            #     .get('extras', {})
-            #     .get('engine_params', {}))
             engine_params = (
-                args['extras'].get('engine_params')
+                data
+                .get('extras', {})
+                .get('engine_params', {})
             )
-            # connect_args = engine_params.get('connect_args')
+            connect_args = engine_params.get('connect_args')
 
-            # if configuration:
-            #     connect_args['configuration'] = configuration
+            if configuration:
+                connect_args['configuration'] = configuration
 
             engine = create_engine(uri, **engine_params)
             engine.connect()
@@ -278,6 +279,7 @@ class TestConnection(Resource):
             #     'The error message returned was:\n{}').format(e))
             return json_result(code=500, msg=str(e))
         return json_result(data=json.dumps(engine.table_names()))
+        # return json_result(data=uri)
 api.add_resource(TestConnection, '/api/v1/testconn')
 
 
