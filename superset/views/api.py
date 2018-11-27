@@ -258,11 +258,11 @@ class TestConnection(Resource):
                                                                   impersonate_user,
                                                                   username),
                 )
-
+            
+            str_extras = data.get('extras')
+            extras_json = json.loads(str_extras)
             engine_params = (
-                data
-                .get('extras', {})
-                .get('engine_params', {})
+                extras_json.get('engine_params', {})
             )
             connect_args = engine_params.get('connect_args')
 
@@ -279,7 +279,7 @@ class TestConnection(Resource):
             #     'The error message returned was:\n{}').format(e))
             return json_result(code=500, msg=str(e))
         return json_result(data=json.dumps(engine.table_names()))
-        # return json_result(data=uri)
+        # return json_result(data=tmp)
 api.add_resource(TestConnection, '/api/v1/testconn')
 
 
