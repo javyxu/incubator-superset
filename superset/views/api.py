@@ -7,8 +7,8 @@ from __future__ import unicode_literals
 
 import logging
 
-from flask import Flask, jsonify, Response
-from flask_restful import reqparse, Resource, Api, request
+from flask import Flask, jsonify, Response, request
+from flask_restful import reqparse, Resource, Api
 
 import superset.models.core as models
 import superset.models.helpers as helper
@@ -30,7 +30,7 @@ parser = reqparse.RequestParser()
 
 def json_result(code=0, data=None, msg='success'):
     # res = Response(json_msg, status=status, mimetype='application/json')
-    return jsonify({"code":status, "data": data, "msg":msg})
+    return jsonify({"code":code, "data": data, "msg":msg})
 
 # 获取Databases
 class Databases(Resource):
@@ -189,7 +189,7 @@ class SavedSql(Resource):
             logging.exception(e)
             # json_error_response(e)
             return json_result(code=500, msg=str(e))
-        return json_result()
+        return json_result(data=None)
         
 api.add_resource(SavedSql, '/api/v1/sql/savedsql')
 
@@ -282,11 +282,12 @@ api.add_resource(TestConnection, '/api/v1/testconn')
 
 
 class AddDatamodel(Resource):
-    parser.add_argument('data')
-    def get(self):
+    # parser.add_argument('data')
+    def post(self):
         try:
-            args = parser.parse_args()
-            data = args['data']
+            # database_name = request.form['database_name']
+            # args = parser.parse_args()
+            # data = args['data']
             # return jsonify({"result": data})
             # task = {
             #     'database_name': database_name,
@@ -309,7 +310,8 @@ class AddDatamodel(Resource):
             #     'allow_multi_schema_metadata_fetch' : False,
             # }
             # dict_rep = task
-            dict_rep = helper.json_to_dict(data)
+            # dict_rep = request.form
+            dict_rep = helper.json_to_dict(json.dumps(request.form))
             session = db.session
             models.Database.import_from_dict(session=session, dict_rep=dict_rep)
             session.commit()
@@ -317,19 +319,19 @@ class AddDatamodel(Resource):
             logging.exception(e)
             # return json_error_response(e)
             return json_result(code=500, msg=str(e))
-        return json_result()
+        return json_result(data=dict_rep)
 # http://172.16.151.188:8088/api/v1/datamodel/add?data={%22database_name%22:%22test6%22,%22sqlalchemy_uri%22:%22postgresql://rasdaman:XXXXXXXXXX@10.0.4.90:5432/RASBASE%22,%22created_by_fk%22:1,%22changed_by_fk%22:1,%22password%22:%2212345678%22,%22cache_timeout%22:40,%22extra%22:%22%22,%22select_as_create_table_as%22:true,%22allow_ctas%22:true,%22expose_in_sqllab%22:true,%22force_ctas_schema%22:%22%22,%22allow_run_async%22:true,%22allow_run_sync%22:true,%22allow_dml%22:true,%22perm%22:%22%22,%22verbose_name%22:%22%22,%22impersonate_user%22:false,%22allow_multi_schema_metadata_fetch%22:false}
 api.add_resource(AddDatamodel, '/api/v1/datamodels/add')
 
 
 class UpdateDatamodel(Resource):
-    parser.add_argument('id', type=int)
-    parser.add_argument('data', type=str)
-    def get(self):
+    # parser.add_argument('id', type=int)
+    # parser.add_argument('data', type=str)
+    def post(self, id):
         try:
-            args = parser.parse_args()
-            pk = args['id']
-            data = args['data']
+            # args = parser.parse_args()
+            # pk = args['id']
+            # data = args['data']
             # return jsonify({"result": data})
             # task = {
             #     'database_name': database_name,
@@ -352,9 +354,10 @@ class UpdateDatamodel(Resource):
             #     'allow_multi_schema_metadata_fetch' : False,
             # }
             # dict_rep = task
-            dict_rep = helper.json_to_dict(data)
+            # dict_rep = helper.json_to_dict(data)
+            dict_rep = helper.json_to_dict(json.dumps(request.form))
             session = db.session
-            curdatabase = session.query(models.Database).filter_by(id=pk).first()
+            curdatabase = session.query(models.Database).filter_by(id=int(id)).first()
             for kv in dict_rep:
                  setattr(curdatabase, kv, dict_rep[kv])
             db.session.add(curdatabase)
@@ -364,8 +367,8 @@ class UpdateDatamodel(Resource):
             logging.exception(e)
             # return json_error_response(e)
             return json_result(code=500, msg=str(e))
-        return json_result()
-api.add_resource(UpdateDatamodel, '/api/v1/datamodels/edit')
+        return json_result(data=None)
+api.add_resource(UpdateDatamodel, '/api/v1/datamodels/edit/<id>')
 
 class DeleteDatamodel(Resource):
     def get(self, id):
@@ -380,5 +383,5 @@ class DeleteDatamodel(Resource):
             logging.exception(e)
             # return json_error_response(e)
             return json_result(code=500, msg=str(e))
-        return json_success()
+        return json_result(data=None)
 api.add_resource(DeleteDatamodel, '/api/v1/datamodels/delete/<id>')
