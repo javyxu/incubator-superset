@@ -259,8 +259,8 @@ class TestConnection(Resource):
                                                                   username),
                 )
             
-            str_extras = data.get('extras')
-            extras_json = json.loads(str_extras)
+            extras_json = data.get('extras')
+            # extras_json = json.loads(str_extras)
             engine_params = (
                 extras_json.get('engine_params', {})
             )
@@ -313,7 +313,8 @@ class AddDatamodel(Resource):
             # }
             # dict_rep = task
             # dict_rep = request.form
-            dict_rep = helper.json_to_dict(json.dumps(request.form))
+            # dict_rep = helper.json_to_dict(request.json)
+            dict_rep = dict(request.json)
             session = db.session
             models.Database.import_from_dict(session=session, dict_rep=dict_rep)
             session.commit()
@@ -357,7 +358,8 @@ class UpdateDatamodel(Resource):
             # }
             # dict_rep = task
             # dict_rep = helper.json_to_dict(data)
-            dict_rep = helper.json_to_dict(json.dumps(request.form))
+            # dict_rep = helper.json_to_dict(json.dumps(request.form))
+            dict_rep =dict(request.json)
             session = db.session
             curdatabase = session.query(models.Database).filter_by(id=int(id)).first()
             for kv in dict_rep:
