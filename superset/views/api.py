@@ -217,9 +217,9 @@ class TestConnection(Resource):
     def post(self):
         """Tests a sqla connection"""
         try:
-            data1 = request.form
-            data2 = json.dumps(data1)
-            data = json.loads(data2)
+            data = request.json
+            # data2 = json.dumps(data1)
+            # data = json.loads(data2)
             # username = g.user.username if g.user is not None else None
             username = ''
             # # data = json.loads(request.form)
