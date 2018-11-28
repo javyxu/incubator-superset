@@ -269,6 +269,10 @@ class TestConnection(Resource):
             if configuration:
                 connect_args['configuration'] = configuration
 
+            if uri.split(':')[2].split('@')[0] == '*' * 10:
+                uri = database.sqlalchemy_uri_decrypted
+            
+            uri
             engine = create_engine(uri, **engine_params)
             engine.connect()
             # return json_success(json.dumps(engine.table_names(), indent=4))
@@ -278,8 +282,9 @@ class TestConnection(Resource):
             #     'Connection failed!\n\n'
             #     'The error message returned was:\n{}').format(e))
             return json_result(code=500, msg=str(e))
+            # return json_result(code=500, msg=uri)
         return json_result(data=json.dumps(engine.table_names()))
-        # return json_result(data=tmp)
+        # return json_result(data=uri)
 api.add_resource(TestConnection, '/api/v1/testconn')
 
 
@@ -313,8 +318,12 @@ class AddDatamodel(Resource):
             # }
             # dict_rep = task
             # dict_rep = request.form
+            # reqparse.json.get('sqlalchemy_uri', )
             # dict_rep = helper.json_to_dict(request.json)
+            sqlalchemy_uri = request.json.get('sqlalchemy_uri')
             dict_rep = dict(request.json)
+            # dict_rep['password'] = sqlalchemy_uri.split(':')[2].split('@')[0]
+
             session = db.session
             models.Database.import_from_dict(session=session, dict_rep=dict_rep)
             session.commit()
@@ -328,12 +337,19 @@ api.add_resource(AddDatamodel, '/api/v1/datamodels/add')
 
 
 class UpdateDatamodel(Resource):
-    # parser.add_argument('id', type=int)
+    parser.add_argument('id', type=int)
     # parser.add_argument('data', type=str)
-    def post(self, id):
+    # def options(self):
+    # return {'Allow' : 'post' }, 200, \
+    # { 'Access-Control-Allow-Origin': '*', \
+    #   'Access-Control-Allow-Methods' : 'PUT,GET' }
+    def options(self):
+        return json_result()
+
+    def post(self):
         try:
-            # args = parser.parse_args()
-            # pk = args['id']
+            args = parser.parse_args()
+            pk = args['id']
             # data = args['data']
             # return jsonify({"result": data})
             # task = {
@@ -361,9 +377,9 @@ class UpdateDatamodel(Resource):
             # dict_rep = helper.json_to_dict(json.dumps(request.form))
             dict_rep =dict(request.json)
             session = db.session
-            curdatabase = session.query(models.Database).filter_by(id=int(id)).first()
+            curdatabase = session.query(models.Database).filter_by(id=int(pk)).first()
             for kv in dict_rep:
-                 setattr(curdatabase, kv, dict_rep[kv])
+                    setattr(curdatabase, kv, dict_rep[kv])
             db.session.add(curdatabase)
             db.session.commit()
             session.commit()
@@ -372,14 +388,16 @@ class UpdateDatamodel(Resource):
             # return json_error_response(e)
             return json_result(code=500, msg=str(e))
         return json_result(data=None)
-api.add_resource(UpdateDatamodel, '/api/v1/datamodels/edit/<id>')
+
+api.add_resource(UpdateDatamodel, '/api/v1/datamodels/edit')
 
 class DeleteDatamodel(Resource):
-    def get(self, id):
+    parser.add_argument('id')
+    def delete(self):
         try:
-            session = db.session
             args = parser.parse_args()
-            # pk = args['id']
+            id = args['id']
+            session = db.session
             o = session.query(models.Database).filter_by(id=id).first()
             session.delete(o)
             session.commit()
@@ -388,4 +406,4 @@ class DeleteDatamodel(Resource):
             # return json_error_response(e)
             return json_result(code=500, msg=str(e))
         return json_result(data=None)
-api.add_resource(DeleteDatamodel, '/api/v1/datamodels/delete/<id>')
+api.add_resource(DeleteDatamodel, '/api/v1/datamodels/delete')

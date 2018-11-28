@@ -880,10 +880,10 @@ class Database(Model, AuditMixinNullable, ImportMixin):
     @property
     def sqlalchemy_uri_decrypted(self):
         conn = sqla.engine.url.make_url(self.sqlalchemy_uri)
-        if custom_password_store:
-            conn.password = custom_password_store(conn)
-        else:
-            conn.password = self.password
+        # if custom_password_store:
+        #     conn.password = custom_password_store(conn)
+        # else:
+        #     conn.password = self.password
         return str(conn)
 
     @property
