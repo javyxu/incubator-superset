@@ -15,7 +15,7 @@ import superset.models.helpers as helper
 import superset.models.sql_lab as sqllab
 from superset import app, db, utils
 from .base import json_error_response
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, and_, or_
 from sqlalchemy.engine.url import make_url
 from flask_appbuilder.models.sqla.interface import SQLAInterface
 from flask_cors import CORS
@@ -38,21 +38,25 @@ class Databases(Resource):
         try:
             session = db.session
             databases = session.query(models.Database).all()
-            temp = []
+            res = []
             for database in databases:
+                temp = dict()
                 if database.name != 'main':
-                    temp.append(database.name)
+                    # temp.append(database.name)
+                    temp['name'] = database.name
+                    temp['id'] = database.id
+                    
+                    res.append(temp)
         except Exception as e:
             logging.exception(e)
             # return json_error_response(e)
             return json_result(code=500, msg=str(e))
         # return jsonify({"status":"OK","code":"200","message":"","result": { "databases": json.dumps(temp)}})
-        return json_result(data={"databases": json.dumps(temp)})
+        return json_result(data={"databases": res})
 
 api.add_resource(Databases, '/api/v1/databases')
 
 # 获取Schemas
-
 class Schemas(Resource):
     parser.add_argument('databasename', type=str)
     def get(self):
@@ -62,6 +66,7 @@ class Schemas(Resource):
             session = db.session
             curdatabase = session.query(models.Database).filter_by(database_name=database_name).first()
             schemas = curdatabase.all_schema_names()
+            db.session.close()
         except Exception as e:
             logging.exception(e)
             # return json_error_response(e)
@@ -82,6 +87,7 @@ class Tables(Resource):
             session = db.session
             curdatabase = session.query(models.Database).filter_by(database_name=database_name).first()
             alltables = curdatabase.all_table_names(schema=schema_name)
+            db.session.close()
         except Exception as e:
             logging.exception(e)
             # return json_error_response(e)
@@ -108,8 +114,15 @@ class ColNames(Resource):
             for colname in colnames:
                 d = {}
                 for kv in colname:
-                    d[kv] = str(colname[kv])
+                    if kv == 'type':
+                        value = str(colname[kv])
+                        d['longtype'] = value
+                        d['type'] = value.split('(')[0]
+                    else:
+                        d[kv] = str(colname[kv])
                 tmp.append(d)
+                
+            db.session.close()
         except Exception as e:
             logging.exception(e)
             # return json_error_response(e)
@@ -121,9 +134,9 @@ api.add_resource(ColNames, '/api/v1/getcolnames')
 
 # 获取Datas
 class GetAllData(Resource):
-    parser.add_argument('databasename', type=str)
-    parser.add_argument('schemaname', type=str)
-    parser.add_argument('tablename', type=str)
+    parser.add_argument('databasename')
+    parser.add_argument('schemaname')
+    parser.add_argument('tablename')
     def get(self):
         try:
             args = parser.parse_args()
@@ -132,29 +145,37 @@ class GetAllData(Resource):
             table_name = args['tablename']
             session = db.session
             curdatabase = session.query(models.Database).filter_by(database_name=database_name).first()
-            datas = curdatabase.get_df('SELECT * FROM {0}'.format(table_name), schema_name)
+            sql = 'SELECT * FROM ' + table_name + " LIMIT 1000"
+            datas = curdatabase.get_df(sql, schema_name)
+            db.session.close()
         except Exception as e:
             logging.exception(e)
             # return json_error_response(e)
             return json_result(code=500, msg=str(e))
         return json_result(data={"datas": datas.to_json(orient='records')})
+        # return json_result(data=sql)
 
 api.add_resource(GetAllData, '/api/v1/sql/getalldata')
 
 # 执行SQL
 class ExecuteSql(Resource):
-    parser.add_argument('databasename', type=str)
-    parser.add_argument('schemaname', type=str)
-    parser.add_argument('sql', type=str)
-    def get(self):
+    # parser.add_argument('databasename', type=str)
+    # parser.add_argument('schemaname', type=str)
+    # parser.add_argument('sql', type=str)
+    def post(self):
         try:
-            args = parser.parse_args()
-            database_name = args['databasename'] 
-            schema_name = args['schemaname']
-            sql = args['sql']
+            # args = parser.parse_args()
+            # database_name = args['databasename'] 
+            # schema_name = args['schemaname']
+            # sql = args['sql']
+            args = request.json
+            database_name = args.get('databasename') 
+            schema_name = args.get('schemaname')
+            sql = args.get('sql')
             session = db.session
             curdatabase = session.query(models.Database).filter_by(database_name=database_name).first()
             datas = curdatabase.get_df(sql, schema_name)
+            db.session.close()
         except Exception as e:
             logging.exception(e)
             # json_error_response(e)
@@ -165,12 +186,14 @@ api.add_resource(ExecuteSql, '/api/v1/sql/executesql')
 
 
 class SavedSql(Resource):
-    parser = reqparse.RequestParser()
-    parser.add_argument('data', type=str)
-    def get(self):
+    # parser = reqparse.RequestParser()
+    # parser.add_argument('data', type=str)
+    def options(self):
+        return json_result()
+    def post(self):
         try:
-            args = parser.parse_args()
-            data = args['data']
+            # args = parser.parse_args()
+            # data = args['data']
             # task = {
             #     'db_id': 1,
             #     'schema': 'main',
@@ -179,12 +202,14 @@ class SavedSql(Resource):
             #     'sql' : 'select * from dbs',
             # }
             # dict_rep = task
-            dict_rep = dict_rep = helper.json_to_dict(data)
+            # dict_rep = dict_rep = helper.json_to_dict(request.json)
+            dict_rep = dict(request.json)
             datamodel = sqllab.SavedQuery()
             for kv in dict_rep:
                  setattr(datamodel, kv, dict_rep[kv])
             db.session.add(datamodel)
             db.session.commit()
+            db.session.close()
         except Exception as e:
             logging.exception(e)
             # json_error_response(e)
@@ -193,6 +218,51 @@ class SavedSql(Resource):
         
 api.add_resource(SavedSql, '/api/v1/sql/savedsql')
 
+class GetSavedSql(Resource):
+    # parser.add_argument('label')
+    # parser.add_argument('database')
+    def get(self):
+        try:
+
+            # args = parser.parse_args()
+            # label =args['label']
+            # database = args['database']
+            session = db.session
+            
+            # # data = request.json            
+            # # label = data.get('label')
+            # # database = data.get('database')
+            # db_id = None
+            # if database is not None:
+            #     db_id = session.query(models.Database).filter_by(database_name=database).value('id')
+            # if label is not None and db_id is not None:
+            #     query_res = session.query(sqllab.SavedQuery).filter_by(label=label, db_id=db_id).all()
+            # elif db_id is not None or label is None:
+            #     query_res = session.query(sqllab.SavedQuery).filter_by(db_id=db_id).all()
+            # elif label is not None or db_id is None:
+            #     query_res = session.query(sqllab.SavedQuery).filter_by(label=label).all()
+            # else:
+            #     # label is None and db_id is None:
+            query_res = session.query(sqllab.SavedQuery).all()
+            
+            res = []
+            for savedquery in query_res:
+                tmp = {}
+                tmp['Label'] = savedquery.label
+                tmp['database'] = session.query(models.Database).filter_by(id=savedquery.db_id).value('database_name')
+                tmp['schema'] = savedquery.schema
+                tmp['description'] = savedquery.description
+                tmp['sql'] = savedquery.sql
+                res.append(tmp)
+            db.session.close()
+        except Exception as e:
+            logging.exception(e)
+            # json_error_response(e)
+            return json_result(code=500, msg=str(e))
+        return json_result(data=res)
+        
+api.add_resource(GetSavedSql, '/api/v1/sql/GetSavedSql')
+
 
 class GetDatamodel(Resource):
     def get(self):
@@ -200,6 +270,7 @@ class GetDatamodel(Resource):
             session = db.session
             curdatabase = session.query(models.Database).filter_by(database_name='main').first()
             datas = curdatabase.get_df('SELECT * FROM dbs WHERE database_name != "main"', 'main')
+            db.session.close()
         except Exception as e:
             logging.exception(e)
             # return json_error_response(e)
@@ -327,6 +398,7 @@ class AddDatamodel(Resource):
             session = db.session
             models.Database.import_from_dict(session=session, dict_rep=dict_rep)
             session.commit()
+            session.close()
         except Exception as e:
             logging.exception(e)
             # return json_error_response(e)
@@ -383,6 +455,7 @@ class UpdateDatamodel(Resource):
             db.session.add(curdatabase)
             db.session.commit()
             session.commit()
+            session.close()
         except Exception as e:
             logging.exception(e)
             # return json_error_response(e)
@@ -401,6 +474,7 @@ class DeleteDatamodel(Resource):
             o = session.query(models.Database).filter_by(id=id).first()
             session.delete(o)
             session.commit()
+            session.close()
         except Exception as e:
             logging.exception(e)
             # return json_error_response(e)
